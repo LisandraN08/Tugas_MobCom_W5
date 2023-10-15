@@ -9,13 +9,14 @@ import SwiftUI
 
 struct ContentView: View {
     
-    var asean = ["Indonesia", "Singapore", "Malaysia", "Laos", "Philipines", "Cambodia", "Myanmar", "Thailand", "Brunei", "Vietnam"]
-    
+    @State private var asean = ["Indonesia", "Singapore", "Malaysia", "Laos", "Philipines", "Cambodia", "Myanmar", "Thailand", "Brunei", "Vietnam"]
     @State private var currentQuestionIndex = 0
     @State private var score = 0
     @State private var isAnswerCorrect = false
     @State private var showingAlert = false
-    @State private var shuffledQuestions = [Int]()
+    
+    @State private var leftSideFlags = [Int]()
+    @State private var rightSideFlags = [Int]()
     
     var body: some View {
         Text("ASEAN FLAGS GAME")
@@ -27,16 +28,26 @@ struct ContentView: View {
             Color.pink
                 .ignoresSafeArea()
             VStack {
-                if currentQuestionIndex < shuffledQuestions.count {
+                if currentQuestionIndex < asean.count {
                     Text("Pilih Bendera dari Negara : ")
                         .foregroundColor(.white)
-                    Text(asean[shuffledQuestions[currentQuestionIndex]])
+                    Text(asean[currentQuestionIndex])
                         .foregroundColor(.white)
                 } else {
                     Text("Permainan Selesai")
                         .foregroundColor(.white)
                     Text("Skor Anda: \(score)")
                         .foregroundColor(.white)
+                    
+                    Button(action: {
+                        restartGame()
+                    }) {
+                        Text("Restart")
+                            .padding(10)
+                            .background(Color.purple)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
                 }
             }
         }
@@ -45,8 +56,7 @@ struct ContentView: View {
         HStack {
             Spacer()
             VStack {
-                ForEach(0..<5) { number in
-                    Button(action: {
+                ForEach(leftSideFlags, id: \.self) { number in Button(action: {
                         self.checkAnswer(number)
                     }) {
                         Image(asean[number])
@@ -57,8 +67,7 @@ struct ContentView: View {
             }
             Spacer()
             VStack {
-                ForEach(5..<10) { number in
-                    Button(action: {
+                ForEach(rightSideFlags, id: \.self) { number in Button(action: {
                         self.checkAnswer(number)
                     }) {
                         Image(asean[number])
@@ -71,23 +80,18 @@ struct ContentView: View {
         }
         
         .alert(isPresented: $showingAlert) {
-            if currentQuestionIndex >= asean.count {
-                return Alert(title: Text("Selamat!"), message: Text("Skor Anda: \(score)"), dismissButton: .default(Text("Selesai")) {
-                })
-            } else {
-                return Alert(title: Text(isAnswerCorrect ? "Jawaban Benar" : "Jawaban Salah"), message: Text("Skor Anda: \(score)"), dismissButton: .default(Text("Lanjut")) {
-                    self.showNextQuestion()
-                })
-            }
+            Alert(title: Text(isAnswerCorrect ? "Jawaban Benar" : "Jawaban Salah"), message: Text("Skor Anda: \(score)"), dismissButton: .default(Text("Lanjut")) {
+                self.showNextQuestion()
+            })
         }
         .onAppear {
             self.shuffleQuestions()
         }
     }
-        
+    
     func checkAnswer(_ selectedFlagIndex: Int) {
-        if currentQuestionIndex < shuffledQuestions.count {
-            if selectedFlagIndex == shuffledQuestions[currentQuestionIndex] {
+        if currentQuestionIndex < asean.count {
+            if selectedFlagIndex == currentQuestionIndex {
                 score += 1
                 isAnswerCorrect = true
             } else {
@@ -98,12 +102,22 @@ struct ContentView: View {
     }
     
     func shuffleQuestions() {
-        shuffledQuestions = Array(0..<asean.count).shuffled()
+        leftSideFlags = Array(0..<5).shuffled()
+        rightSideFlags = Array(5..<10).shuffled()
     }
     
     func showNextQuestion() {
         currentQuestionIndex += 1
+        shuffleQuestions() // Mengacak flags setiap kali soal berganti
     }
+    func restartGame() {
+            currentQuestionIndex = 0
+            score = 0
+            isAnswerCorrect = false
+            showingAlert = false
+            shuffleQuestions()
+            asean.shuffle()
+        }
 }
 
 struct ContentView_Previews: PreviewProvider {
@@ -111,6 +125,7 @@ struct ContentView_Previews: PreviewProvider {
         ContentView()
     }
 }
+
 
 #Preview {
     ContentView()
